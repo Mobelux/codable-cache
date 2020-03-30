@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "DiskCache",
+        "repositoryURL": "git@github.com:Mobelux/DiskCache.git",
+        "state": {
+          "branch": null,
+          "revision": "678d6f1e283836535488fd9f1776f40719e2e137",
+          "version": "1.1.2"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
