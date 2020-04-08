@@ -13,12 +13,12 @@ public protocol Keyable {
 
 extension URL: Keyable {
     public var key: String {
-        return String(hashValue).md5
+        return absoluteString.md5
     }
 }
 
 extension String: Keyable {
     public var key: String {
-        return String(hashValue).md5
+        return md5
     }
 }
