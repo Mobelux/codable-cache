@@ -25,8 +25,12 @@ public struct CodableCaching<Value: Codable> {
                 }
 
                 try codableCache.cache(object: newValue, key: key, ttl: ttl)
-            } catch {
-                debugPrint("\(#function) - \(error)")
+            } catch(let error as NSError) {
+                switch error.code {
+                case NSFileNoSuchFileError: break
+                default:
+                    debugPrint("\(#function) - \(error)")
+                }
             }
 
         }
