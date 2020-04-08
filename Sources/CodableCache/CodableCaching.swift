@@ -17,7 +17,7 @@ public struct CodableCaching<Value: Codable> {
         get {
             codableCache.object(key: key)
         }
-        set {
+        nonmutating set {
             do {
                 guard let newValue = newValue else {
                     try codableCache.delete(objectWith: key)
@@ -35,5 +35,11 @@ public struct CodableCaching<Value: Codable> {
     public init(key: Keyable, ttl: TTL = .default) {
         self.key = key
         self.ttl = ttl
+    }
+
+    public init(wrappedValue: Value?, key: Keyable, ttl: TTL = .default) {
+        self.key = key
+        self.ttl = ttl
+        self.wrappedValue = wrappedValue
     }
 }
