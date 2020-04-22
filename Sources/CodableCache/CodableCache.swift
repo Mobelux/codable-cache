@@ -24,6 +24,8 @@ public final class CodableCache {
         return decoder
     }()
 
+    public init() {}
+
     public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) throws {
         let wrapper = CacheWrapper(ttl: ttl, created: Date(), object: object)
         try cache.cache(try encoder.encode(wrapper), key: key.key)
