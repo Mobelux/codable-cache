@@ -58,6 +58,5 @@ public final class CodableCaching<Value: Codable> {
         self.storageType = storageType
         self.ttl = ttl
         self.defaultValue = wrappedValue
-        self.wrappedValue = wrappedValue
     }
 }
