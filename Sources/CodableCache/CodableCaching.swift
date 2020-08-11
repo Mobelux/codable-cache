@@ -17,19 +17,19 @@ public final class CodableCaching<Value: Codable> {
     private let key: Keyable
     private let storageType: StorageType
     private let ttl: TTL
+    private let defaultValue: Value
 
-    public var wrappedValue: Value? {
+    public var wrappedValue: Value {
         get {
-            codableCache.object(key: key)
+            codableCache.object(key: key) ?? defaultValue
         }
         set {
             do {
-                guard let newValue = newValue else {
+                if let newValue = newValue as Optional<Value>?, newValue == nil {
                     try codableCache.delete(objectWith: key)
-                    return
+                } else {
+                    try codableCache.cache(object: newValue, key: key, ttl: ttl)
                 }
-
-                try codableCache.cache(object: newValue, key: key, ttl: ttl)
             } catch(let error as NSError) {
                 switch error.code {
                 case NSFileNoSuchFileError: break
@@ -37,20 +37,27 @@ public final class CodableCaching<Value: Codable> {
                     debugPrint("\(#function) - \(error)")
                 }
             }
-
         }
     }
 
-    public init(key: Keyable, storageType: StorageType = .temporary(.custom("codable-cache")), ttl: TTL = .default) {
+    public init(defaultValue: Value,
+                key: Keyable,
+                storageType: StorageType = .temporary(.custom("codable-cache")),
+                ttl: TTL = .default) {
         self.key = key
+        self.defaultValue = defaultValue
         self.storageType = storageType
         self.ttl = ttl
     }
 
-    public init(wrappedValue: Value?, key: Keyable, storageType: StorageType = .temporary(.custom("codable-cache")), ttl: TTL = .default) {
+    public init(wrappedValue: Value,
+                key: Keyable,
+                storageType: StorageType = .temporary(.custom("codable-cache")),
+                ttl: TTL = .default) {
         self.key = key
         self.storageType = storageType
         self.ttl = ttl
+        self.defaultValue = wrappedValue
         self.wrappedValue = wrappedValue
     }
 }
