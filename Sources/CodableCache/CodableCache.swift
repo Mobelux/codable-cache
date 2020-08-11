@@ -35,11 +35,11 @@ public final class CodableCache {
 
     public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) throws {
         let wrapper = CacheWrapper(ttl: ttl, created: Date(), object: object)
-        try cache.cache(try encoder.encode(wrapper), key: key.key)
+        try cache.cache(try encoder.encode(wrapper), key: key.rawValue)
     }
 
     public func delete(objectWith key: Keyable) throws {
-        try cache.delete(key.key)
+        try cache.delete(key.rawValue)
     }
 
     public func deleteAll() throws {
@@ -48,7 +48,7 @@ public final class CodableCache {
 
     public func object<T: Codable>(key: Keyable) -> T? {
         do {
-            guard let data = try self.cache.data(key.key) else {
+            guard let data = try self.cache.data(key.rawValue) else {
                 return nil
             }
 

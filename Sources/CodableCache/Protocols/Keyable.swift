@@ -8,17 +8,17 @@
 import Foundation
 
 public protocol Keyable {
-    var key: String { get }
+    var rawValue: String { get }
 }
 
 extension URL: Keyable {
-    public var key: String {
+    public var rawValue: String {
         return absoluteString.md5
     }
 }
 
 extension String: Keyable {
-    public var key: String {
+    public var rawValue: String {
         return md5
     }
 }
