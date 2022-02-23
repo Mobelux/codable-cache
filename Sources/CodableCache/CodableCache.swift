@@ -10,7 +10,11 @@ import Foundation
 
 public final class CodableCache {
     private lazy var cache: DiskCache = {
-        try! DiskCache(storageType: self.storageType)
+        do {
+            return try DiskCache(storageType: storageType)
+        } catch {
+            fatalError("Creating cache instance failed with error:\n\(error)")
+        }
     }()
 
     private lazy var encoder: JSONEncoder = {
@@ -33,35 +37,37 @@ public final class CodableCache {
         self.storageType = storageType
     }
 
-    public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) throws {
+    public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) async throws {
         let wrapper = CacheWrapper(ttl: ttl, created: Date(), object: object)
-        try cache.cache(try encoder.encode(wrapper), key: key.rawValue)
+        try await cache.cache(try encoder.encode(wrapper), key: key.rawValue)
     }
 
-    public func delete(objectWith key: Keyable) throws {
-        try cache.delete(key.rawValue)
+    public func delete(objectWith key: Keyable) async throws {
+        try await cache.delete(key.rawValue)
     }
 
-    public func deleteAll() throws {
-        try cache.deleteAll()
+    public func deleteAll() async throws {
+        try await cache.deleteAll()
     }
 
-    public func object<T: Codable>(key: Keyable) -> T? {
+    public func object<T: Codable>(key: Keyable) async -> T? {
         do {
-            guard let data = try self.cache.data(key.rawValue) else {
-                return nil
-            }
-
+            let data = try await self.cache.data(key.rawValue)
             let wrapper = try decoder.decode(CacheWrapper<T>.self, from: data)
             if wrapper.isObjectStale {
-                try self.delete(objectWith: key)
+                try await delete(objectWith: key)
                 return nil
             } else {
                 return wrapper.object
             }
-        } catch {
-            try? self.delete(objectWith: key)
-            return nil
+        } catch let error as NSError {
+            switch error.code {
+            case NSFileNoSuchFileError, NSFileReadNoSuchFileError:
+                return nil
+            default:
+                try? await delete(objectWith: key)
+                return nil
+            }
         }
     }
 }

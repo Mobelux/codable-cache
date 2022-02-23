@@ -17,46 +17,49 @@ public final class CodableCaching<Value: Codable> {
     private let key: Keyable
     private let storageType: StorageType
     private let ttl: TTL
-    private let defaultValue: Value
+    private var value: Value?
 
-    public var wrappedValue: Value {
-        get {
-            codableCache.object(key: key) ?? defaultValue
-        }
-        set {
-            do {
-                if let newValue = newValue as Optional<Value>?, newValue == nil {
-                    try codableCache.delete(objectWith: key)
-                } else {
-                    try codableCache.cache(object: newValue, key: key, ttl: ttl)
-                }
-            } catch(let error as NSError) {
-                switch error.code {
-                case NSFileNoSuchFileError: break
-                default:
-                    debugPrint("\(#function) - \(error)")
-                }
+    public var projectedValue: CodableCaching<Value> { self }
+
+    public func get() async -> Value? {
+        let cachedValue: Value? = await codableCache.object(key: key)
+        value = cachedValue
+        return cachedValue
+    }
+
+    public func set(_ value: Value?) async {
+        do {
+            if value == nil {
+                try await codableCache.delete(objectWith: key)
+            } else {
+                try await codableCache.cache(object: value, key: key, ttl: ttl)
+            }
+
+            self.value = value
+        } catch let error as NSError {
+            switch error.code {
+            case NSFileNoSuchFileError, NSFileReadNoSuchFileError: break
+            default:
+                #if DEBUG
+                print("\(#function) - Caching value failed with error:\n\(error)")
+                #endif
             }
         }
     }
 
-    public init(defaultValue: Value,
-                key: Keyable,
-                storageType: StorageType = .temporary(.custom("codable-cache")),
-                ttl: TTL = .default) {
-        self.key = key
-        self.defaultValue = defaultValue
-        self.storageType = storageType
-        self.ttl = ttl
+    public var wrappedValue: Value? {
+        get { value }
+        set { value = newValue }
     }
 
-    public init(wrappedValue: Value,
+    public init(wrappedValue: Value? = nil,
                 key: Keyable,
                 storageType: StorageType = .temporary(.custom("codable-cache")),
                 ttl: TTL = .default) {
         self.key = key
         self.storageType = storageType
         self.ttl = ttl
-        self.defaultValue = wrappedValue
+        self.value = wrappedValue
     }
 }
+
