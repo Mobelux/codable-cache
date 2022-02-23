@@ -12,46 +12,6 @@ public enum TTL: Codable {
         case second, minute, hour, day, forever
     }
 
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-
-        if let value = try? container.decode(Int.self, forKey: .second) {
-            self = .second(value)
-            return
-        } else if let value = try? container.decode(Int.self, forKey: .minute) {
-            self = .minute(value)
-            return
-        } else if let value = try? container.decode(Int.self, forKey: .hour) {
-            self = .hour(value)
-            return
-        } else if let value = try? container.decode(Int.self, forKey: .day) {
-            self = .day(value)
-            return
-        } else if (try? container.decode(String.self, forKey: .forever)) != nil {
-            self = .forever
-            return
-        }
-
-        throw NSError(domain: "com.mobelux.codable-cache", code: -100, userInfo: [NSLocalizedDescriptionKey: "\(TTL.self) - Decode failure"])
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-
-        switch self {
-        case .second(let time):
-            try container.encode(time, forKey: .second)
-        case .minute(let time):
-            try container.encode(time, forKey: .minute)
-        case .hour(let time):
-            try container.encode(time, forKey: .hour)
-        case .day(let time):
-            try container.encode(time, forKey: .day)
-        case .forever:
-            try container.encode("", forKey: .forever)
-        }
-    }
-
     case second(Int)
     case minute(Int)
     case hour(Int)
