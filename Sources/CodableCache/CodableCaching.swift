@@ -11,11 +11,15 @@ import Foundation
 @propertyWrapper
 public final class CodableCaching<Value: Codable> {
     private lazy var codableCache: CodableCache = {
-        CodableCache(self.storageType)
+        do {
+            return try CodableCache(cache())
+        } catch {
+            fatalError("Creating cache instance failed with error:\n\(error)")
+        }
     }()
 
+    private let cache: () throws -> Cache
     private let key: Keyable
-    private let storageType: StorageType
     private let ttl: TTL
     private var value: Value?
 
@@ -54,12 +58,12 @@ public final class CodableCaching<Value: Codable> {
 
     public init(wrappedValue: Value? = nil,
                 key: Keyable,
-                storageType: StorageType = .temporary(.custom("codable-cache")),
+                cache: @escaping () throws -> Cache = { try DiskCache(storageType: .temporary(.custom("codable-cache"))) },
                 ttl: TTL = .default) {
-        self.key = key
-        self.storageType = storageType
-        self.ttl = ttl
         self.value = wrappedValue
+        self.key = key
+        self.cache = cache
+        self.ttl = ttl
     }
 }
 

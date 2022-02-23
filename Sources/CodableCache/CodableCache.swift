@@ -9,14 +9,6 @@ import DiskCache
 import Foundation
 
 public final class CodableCache {
-    private lazy var cache: DiskCache = {
-        do {
-            return try DiskCache(storageType: storageType)
-        } catch {
-            fatalError("Creating cache instance failed with error:\n\(error)")
-        }
-    }()
-
     private lazy var encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -31,10 +23,10 @@ public final class CodableCache {
         return decoder
     }()
 
-    public private(set) var storageType: StorageType
+    private let cache: Cache
 
-    public init(_ storageType: StorageType = .temporary(.custom("codable-cache"))) {
-        self.storageType = storageType
+    public init(_ cache: Cache) {
+        self.cache = cache
     }
 
     public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) async throws {
