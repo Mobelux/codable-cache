@@ -3,8 +3,4 @@ import XCTest
 
 final class CodableCacheTests: XCTestCase {
     func testExample() { }
-
-    static var allTests = [
-        ("testExample", testExample),
-    ]
 }
