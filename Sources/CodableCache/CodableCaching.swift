@@ -11,52 +11,61 @@ import Foundation
 @propertyWrapper
 public final class CodableCaching<Value: Codable> {
     private lazy var codableCache: CodableCache = {
-        CodableCache(self.storageType)
+        do {
+            return try CodableCache(cache())
+        } catch {
+            fatalError("Creating cache instance failed with error:\n\(error)")
+        }
     }()
 
+    private let cache: () throws -> Cache
     private let key: Keyable
-    private let storageType: StorageType
     private let ttl: TTL
-    private let defaultValue: Value
 
-    public var wrappedValue: Value {
-        get {
-            codableCache.object(key: key) ?? defaultValue
-        }
-        set {
-            do {
-                if let newValue = newValue as Optional<Value>?, newValue == nil {
-                    try codableCache.delete(objectWith: key)
-                } else {
-                    try codableCache.cache(object: newValue, key: key, ttl: ttl)
-                }
-            } catch(let error as NSError) {
-                switch error.code {
-                case NSFileNoSuchFileError: break
-                default:
-                    debugPrint("\(#function) - \(error)")
-                }
+    public var wrappedValue: Value?
+    public var projectedValue: CodableCaching<Value> { self }
+
+    /// Asynchronously gets the value from the cache. If the `ttl` has expired or if nothing has been cached for `key`, returns nil
+    public func get() async -> Value? {
+        let cachedValue: Value? = await codableCache.object(key: key)
+        wrappedValue = cachedValue
+        return cachedValue
+    }
+
+    /// Asynchronously caches the given value
+    public func set(_ value: Value?) async {
+        do {
+            if value == nil {
+                try await codableCache.delete(objectWith: key)
+            } else {
+                try await codableCache.cache(object: value, key: key, ttl: ttl)
+            }
+
+            self.wrappedValue = value
+        } catch let error as NSError {
+            switch error.code {
+            case NSFileNoSuchFileError, NSFileReadNoSuchFileError: break
+            default:
+                #if DEBUG
+                print("\(#function) - Caching value failed with error:\n\(error)")
+                #endif
             }
         }
     }
 
-    public init(defaultValue: Value,
+    /// Initializes an instance of `CodableCaching`
+    /// - Parameters:
+    ///   - wrappedValue: A default value
+    ///   - key: A unique key used to identify the cached object.
+    ///   - cache: A function defining a type conforming to `Cache` to use as backing storage.
+    ///   - ttl: Defines the amount of time the cached object is valid.
+    public init(wrappedValue: Value? = nil,
                 key: Keyable,
-                storageType: StorageType = .temporary(.custom("codable-cache")),
+                cache: @escaping () throws -> Cache = { try DiskCache(storageType: .temporary(.custom("codable-cache"))) },
                 ttl: TTL = .default) {
+        self.wrappedValue = wrappedValue
         self.key = key
-        self.defaultValue = defaultValue
-        self.storageType = storageType
+        self.cache = cache
         self.ttl = ttl
-    }
-
-    public init(wrappedValue: Value,
-                key: Keyable,
-                storageType: StorageType = .temporary(.custom("codable-cache")),
-                ttl: TTL = .default) {
-        self.key = key
-        self.storageType = storageType
-        self.ttl = ttl
-        self.defaultValue = wrappedValue
     }
 }
