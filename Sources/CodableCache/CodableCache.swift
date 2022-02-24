@@ -27,7 +27,7 @@ public final class CodableCache {
 
     private let cache: Cache
 
-    /// Initilize and instance of `CodableCache`
+    /// Initilize an instance of `CodableCache`
     /// - Parameter cache: A type conforming to the `Cache` protocol.
     public init(_ cache: Cache) {
         self.cache = cache
