@@ -26,6 +26,7 @@ public final class CodableCaching<Value: Codable> {
     public var projectedValue: CodableCaching<Value> { self }
 
     /// Asynchronously gets the value from the cache. If the `ttl` has expired or if nothing has been cached for `key`, returns nil
+    @discardableResult
     public func get() async -> Value? {
         let cachedValue: Value? = await codableCache.object(key: key)
         wrappedValue = cachedValue
