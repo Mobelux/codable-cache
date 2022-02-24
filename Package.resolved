@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "DiskCache",
-        "repositoryURL": "git@github.com:Mobelux/DiskCache.git",
+        "repositoryURL": "https://github.com/Mobelux/DiskCache.git",
         "state": {
           "branch": null,
           "revision": "dc9d51b67abefb41669cee38534cf86ab92ea610",
@@ -12,11 +12,11 @@
       },
       {
         "package": "swift-crypto",
-        "repositoryURL": "git@github.com:apple/swift-crypto.git",
+        "repositoryURL": "https://github.com/apple/swift-crypto.git",
         "state": {
           "branch": null,
-          "revision": "d67ac68d09a95443303e9d6e37b34e7ba101d5f1",
-          "version": "1.0.1"
+          "revision": "3bea268b223651c4ab7b7b9ad62ef9b2d4143eb6",
+          "version": "1.1.6"
         }
       }
     ]
