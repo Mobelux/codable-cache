@@ -8,6 +8,7 @@
 import DiskCache
 import Foundation
 
+/// A cache for `Codable` values.
 public final class CodableCache {
     internal static var encoder: JSONEncoder = {
         let encoder = JSONEncoder()
