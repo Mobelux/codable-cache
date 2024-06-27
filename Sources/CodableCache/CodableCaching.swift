@@ -25,7 +25,7 @@ public final class CodableCaching<Value: Codable> {
     public var wrappedValue: Value?
     public var projectedValue: CodableCaching<Value> { self }
 
-    /// Asynchronously gets the value from the cache. If the `ttl` has expired or if nothing has been cached for `key`, returns nil
+    /// Asynchronously gets the value from the cache. If the `ttl` has expired or if nothing has been cached for `key`, returns nil.
     @discardableResult
     public func get() async -> Value? {
         let cachedValue: Value? = await codableCache.object(key: key)
@@ -33,7 +33,7 @@ public final class CodableCaching<Value: Codable> {
         return cachedValue
     }
 
-    /// Asynchronously caches the given value
+    /// Asynchronously caches the given value.
     public func set(_ value: Value?) async {
         do {
             if value == nil {
@@ -54,9 +54,9 @@ public final class CodableCaching<Value: Codable> {
         }
     }
 
-    /// Initializes an instance of `CodableCaching`
+    /// Initializes an instance of `CodableCaching`.
     /// - Parameters:
-    ///   - wrappedValue: A default value
+    ///   - wrappedValue: A default value.
     ///   - key: A unique key used to identify the cached object.
     ///   - cache: A function defining a type conforming to `Cache` to use as backing storage.
     ///   - ttl: Defines the amount of time the cached object is valid.
