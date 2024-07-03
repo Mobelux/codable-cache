@@ -31,7 +31,7 @@ class MockCache: Cache {
     var callable: Callable = .none
     let instruction: Instruction
 
-    func cache(_ data: Data, key: String) async throws {
+    func syncCache(_ data: Data, key: String) throws {
         defer {
             self.callable = .cache
         }
@@ -50,7 +50,7 @@ class MockCache: Cache {
         }
     }
 
-    func data(_ key: String) async throws -> Data {
+    func syncData(_ key: String) throws -> Data {
         defer {
             self.callable = .data
         }
@@ -67,7 +67,7 @@ class MockCache: Cache {
         }
     }
 
-    func delete(_ key: String) async throws {
+    func syncDelete(_ key: String) throws {
         defer {
             self.callable = .delete
         }
@@ -83,7 +83,7 @@ class MockCache: Cache {
         }
     }
 
-    func deleteAll() async throws {
+    func syncDeleteAll() throws {
         defer {
             self.callable = .deleteAll
         }
@@ -97,6 +97,24 @@ class MockCache: Cache {
             fatalError("not callable")
         case .none: break
         }
+    }
+
+    // MARK: - Async support
+
+    func cache(_ data: Data, key: String) async throws {
+        try syncCache(data, key: key)
+    }
+
+    func data(_ key: String) async throws -> Data {
+        try syncData(key)
+    }
+
+    func delete(_ key: String) async throws {
+        try syncDelete(key)
+    }
+
+    func deleteAll() async throws {
+        try syncDeleteAll()
     }
 
     func fileURL(_ filename: String) -> URL { fatalError("not callable") }
