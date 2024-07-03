@@ -8,7 +8,7 @@
 import DiskCache
 import Foundation
 
-class MockCache: Cache {
+final class MockCache: Cache, @unchecked Sendable {
     enum Callable {
         case cache
         case data
@@ -28,12 +28,13 @@ class MockCache: Cache {
         self.instruction = instruction
     }
 
+    private let lock = NSLock()
     var callable: Callable = .none
     let instruction: Instruction
 
     func syncCache(_ data: Data, key: String) throws {
         defer {
-            self.callable = .cache
+            setCallable(.cache)
         }
 
         switch instruction {
@@ -52,7 +53,7 @@ class MockCache: Cache {
 
     func syncData(_ key: String) throws -> Data {
         defer {
-            self.callable = .data
+            setCallable(.data)
         }
 
         switch instruction {
@@ -69,7 +70,7 @@ class MockCache: Cache {
 
     func syncDelete(_ key: String) throws {
         defer {
-            self.callable = .delete
+            setCallable(.delete)
         }
 
         switch instruction {
@@ -85,7 +86,7 @@ class MockCache: Cache {
 
     func syncDeleteAll() throws {
         defer {
-            self.callable = .deleteAll
+            setCallable(.deleteAll)
         }
 
         switch instruction {
@@ -118,4 +119,12 @@ class MockCache: Cache {
     }
 
     func fileURL(_ filename: String) -> URL { fatalError("not callable") }
+}
+
+private extension MockCache {
+    func setCallable(_ value: Callable) {
+        lock.lock()
+        self.callable = value
+        lock.unlock()
+    }
 }
