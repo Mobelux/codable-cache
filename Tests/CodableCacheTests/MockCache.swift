@@ -42,7 +42,11 @@ final class MockCache: Cache, @unchecked Sendable {
             throw error
         case .data(let instructionData):
             guard instructionData == data else {
-                throw "mismatched data"
+                throw """
+                    mismatched data
+                    E: \(String(decoding: instructionData, as: UTF8.self))
+                    A: \(String(decoding: data, as: UTF8.self))
+                    """
             }
         case .dataThrow:
             fatalError("not callable")
