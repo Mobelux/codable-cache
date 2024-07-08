@@ -21,6 +21,10 @@ class CodableCachingTest: XCTestCase {
         ttl: .default)
     var testValue: String?
 
+    override func setUp() {
+        CodableCache.encoder.outputFormatting = .sortedKeys
+    }
+
     func testGetValue() async {
         let value = await $testValue.get()
         XCTAssertEqual(value, "test-value")

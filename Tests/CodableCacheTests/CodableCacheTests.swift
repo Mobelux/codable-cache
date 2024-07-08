@@ -21,6 +21,7 @@ final class CodableCacheTests: XCTestCase {
     override func setUp() {
         let date = Date()
         CodableCache.makeDate = { date }
+        CodableCache.encoder.outputFormatting = .sortedKeys
     }
 
     func testCache() async throws {
