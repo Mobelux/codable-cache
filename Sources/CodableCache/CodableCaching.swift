@@ -13,13 +13,13 @@ import Foundation
 public final class CodableCaching<Value: Codable> {
     private lazy var codableCache: CodableCache = {
         do {
-            return try CodableCache(cache())
+            return try makeCodableCache()
         } catch {
             fatalError("Creating cache instance failed with error:\n\(error)")
         }
     }()
 
-    private let cache: () throws -> Cache
+    private let makeCodableCache: @Sendable () throws -> CodableCache
     private let key: Keyable
     private let ttl: TTL
 
@@ -64,13 +64,43 @@ public final class CodableCaching<Value: Codable> {
     ///   - key: A unique key used to identify the cached object.
     ///   - cache: A function defining a type conforming to `Cache` to use as backing storage.
     ///   - ttl: Defines the amount of time the cached object is valid.
-    public init(wrappedValue: Value? = nil,
-                key: Keyable,
-                cache: @escaping () throws -> Cache = { try DiskCache(storageType: .temporary(.custom("codable-cache"))) },
-                ttl: TTL = .default) {
+    public convenience init(
+        wrappedValue: Value? = nil,
+        key: Keyable,
+        cache: @escaping @Sendable () throws -> any Cache = { try DiskCache(storageType: .temporary(.custom("codable-cache"))) },
+        ttl: TTL = .default
+    ) {
+        self.init(
+            wrappedValue: wrappedValue,
+            key: key,
+            makeCodableCache: { try CodableCache(cache()) },
+            ttl: ttl)
+    }
+
+    internal convenience init(
+        wrappedValue: Value? = nil,
+        key: any Keyable,
+        cache: @escaping @Sendable () throws -> any Cache,
+        encoder: JSONEncoder,
+        makeDate: @escaping @Sendable () -> Date,
+        ttl: TTL = .default
+    ) {
+        self.init(
+            wrappedValue: wrappedValue,
+            key: key,
+            makeCodableCache: { try CodableCache(cache: cache(), encoder: encoder, makeDate: makeDate) },
+            ttl: ttl)
+    }
+
+    internal init(
+        wrappedValue: Value? = nil,
+        key: any Keyable,
+        makeCodableCache: @escaping @Sendable () throws  -> CodableCache,
+        ttl: TTL = .default
+    ) {
         self.wrappedValue = wrappedValue
         self.key = key
-        self.cache = cache
+        self.makeCodableCache = makeCodableCache
         self.ttl = ttl
     }
 }

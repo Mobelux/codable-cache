@@ -8,7 +8,7 @@
 import DiskCache
 import Foundation
 
-class MockCache: Cache {
+final class MockCache: Cache, @unchecked Sendable {
     enum Callable {
         case cache
         case data
@@ -28,12 +28,13 @@ class MockCache: Cache {
         self.instruction = instruction
     }
 
+    private let lock = NSLock()
     var callable: Callable = .none
     let instruction: Instruction
 
-    func cache(_ data: Data, key: String) async throws {
+    func syncCache(_ data: Data, key: String) throws {
         defer {
-            self.callable = .cache
+            setCallable(.cache)
         }
 
         switch instruction {
@@ -41,7 +42,11 @@ class MockCache: Cache {
             throw error
         case .data(let instructionData):
             guard instructionData == data else {
-                throw "mismatched data"
+                throw """
+                    mismatched data
+                    E: \(String(decoding: instructionData, as: UTF8.self))
+                    A: \(String(decoding: data, as: UTF8.self))
+                    """
             }
         case .dataThrow:
             fatalError("not callable")
@@ -50,9 +55,9 @@ class MockCache: Cache {
         }
     }
 
-    func data(_ key: String) async throws -> Data {
+    func syncData(_ key: String) throws -> Data {
         defer {
-            self.callable = .data
+            setCallable(.data)
         }
 
         switch instruction {
@@ -67,9 +72,9 @@ class MockCache: Cache {
         }
     }
 
-    func delete(_ key: String) async throws {
+    func syncDelete(_ key: String) throws {
         defer {
-            self.callable = .delete
+            setCallable(.delete)
         }
 
         switch instruction {
@@ -83,9 +88,9 @@ class MockCache: Cache {
         }
     }
 
-    func deleteAll() async throws {
+    func syncDeleteAll() throws {
         defer {
-            self.callable = .deleteAll
+            setCallable(.deleteAll)
         }
 
         switch instruction {
@@ -99,5 +104,31 @@ class MockCache: Cache {
         }
     }
 
+    // MARK: - Async support
+
+    func cache(_ data: Data, key: String) async throws {
+        try syncCache(data, key: key)
+    }
+
+    func data(_ key: String) async throws -> Data {
+        try syncData(key)
+    }
+
+    func delete(_ key: String) async throws {
+        try syncDelete(key)
+    }
+
+    func deleteAll() async throws {
+        try syncDeleteAll()
+    }
+
     func fileURL(_ filename: String) -> URL { fatalError("not callable") }
+}
+
+private extension MockCache {
+    func setCallable(_ value: Callable) {
+        lock.lock()
+        self.callable = value
+        lock.unlock()
+    }
 }

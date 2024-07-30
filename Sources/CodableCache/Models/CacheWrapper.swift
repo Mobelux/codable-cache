@@ -18,3 +18,5 @@ extension CacheWrapper {
         return abs(created.timeIntervalSinceNow) >= TimeInterval(ttl.value)
     }
 }
+
+extension CacheWrapper: Sendable where T: Sendable {}

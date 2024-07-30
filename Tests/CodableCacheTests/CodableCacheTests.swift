@@ -14,20 +14,21 @@ final class CodableCacheTests: XCTestCase {
     }
 
     static let test = Test(value: "test-value")
+    let encoder = JSONEncoder.sorted
+    var date = Date(timeIntervalSince1970: 0)
     var wrapper: CacheWrapper<Test> {
-        CodableCacheTests.wrapper(for: CodableCacheTests.test, date: CodableCache.makeDate())
+        CodableCacheTests.wrapper(for: CodableCacheTests.test, date: date)
     }
 
     override func setUp() {
-        let date = Date()
-        CodableCache.makeDate = { date }
+        date = Date()
     }
 
     func testCache() async throws {
-        let data = try CodableCache.encoder.encode(wrapper)
+        let data = try encoder.encode(wrapper)
 
         let mockCache = MockCache(instruction: .data(data))
-        let codableCache = CodableCache(mockCache)
+        let codableCache = CodableCache(cache: mockCache, encoder: encoder, makeDate: { self.date })
 
         do {
             try await codableCache.cache(object: Self.test, key: "test", ttl: .default)
@@ -53,10 +54,10 @@ final class CodableCacheTests: XCTestCase {
     }
 
     func testData() async throws {
-        let testData = try CodableCache.encoder.encode(wrapper)
+        let testData = try encoder.encode(wrapper)
 
         let mockCache = MockCache(instruction: .data(testData))
-        let codableCache = CodableCache(mockCache)
+        let codableCache = CodableCache(cache: mockCache, encoder: encoder, makeDate: { self.date })
 
         let data: Test? = await codableCache.object(key: "test")
         XCTAssertEqual(data, Self.test)
@@ -64,12 +65,12 @@ final class CodableCacheTests: XCTestCase {
     }
 
     func testStaleData() async throws {
-        CodableCache.makeDate = { Date(timeIntervalSinceNow: -Double(TTL.day(2).value)) }
-        let testData = try CodableCache.encoder.encode(wrapper)
+        date = Date(timeIntervalSinceNow: -Double(TTL.day(2).value))
+        let testData = try encoder.encode(wrapper)
         let testError = "throwing-data"
 
         let mockCache = MockCache(instruction: .dataThrow(testData, testError))
-        let codableCache = CodableCache(mockCache)
+        let codableCache = CodableCache(cache: mockCache, encoder: encoder, makeDate: { self.date })
 
         let data: Test? = await codableCache.object(key: "test")
         XCTAssertEqual(data, nil)

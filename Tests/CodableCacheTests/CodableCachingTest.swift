@@ -9,15 +9,19 @@ import XCTest
 @testable import CodableCache
 
 class CodableCachingTest: XCTestCase {
+    static let date = Date()
+
     @CodableCaching(
         key: "test",
         cache: { MockCache(
             instruction: .data(
-                try! CodableCache.encoder.encode(CacheWrapper(
+                try! JSONEncoder.sorted.encode(CacheWrapper(
                     ttl: .default,
-                    created: CodableCache.makeDate(),
+                    created: date,
                     object: "test-value"))
             )) },
+        encoder: .sorted,
+        makeDate: { CodableCachingTest.date },
         ttl: .default)
     var testValue: String?
 

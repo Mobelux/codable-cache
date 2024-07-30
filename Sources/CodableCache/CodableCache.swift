@@ -9,29 +9,28 @@ import DiskCache
 import Foundation
 
 /// A cache for `Codable` values.
-public final class CodableCache {
-    internal static var encoder: JSONEncoder = {
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-
-        return encoder
-    }()
-
-    internal static var decoder: JSONDecoder = {
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-
-        return decoder
-    }()
-
-    internal static var makeDate: () -> Date = { Date() }
-
+public final class CodableCache: Sendable {
     private let cache: Cache
+    private let decoder: JSONDecoder
+    private let encoder: JSONEncoder
+    private let makeDate: @Sendable () -> Date
 
     /// Initilizes an instance of `CodableCache`.
     /// - Parameter cache: A type conforming to the `Cache` protocol.
-    public init(_ cache: Cache) {
+    public convenience init(_ cache: Cache) {
+        self.init(cache: cache)
+    }
+
+    internal init(
+        cache: any Cache,
+        decoder: JSONDecoder = .iso8601,
+        encoder: JSONEncoder = .iso8601,
+        makeDate: @escaping @Sendable () -> Date = { Date() }
+    ) {
         self.cache = cache
+        self.decoder = decoder
+        self.encoder = encoder
+        self.makeDate = makeDate
     }
 
     /// Asynchronously caches the given object.
@@ -39,8 +38,8 @@ public final class CodableCache {
     /// - Parameter key: A unique key used to identify the cached object.
     /// - Parameter ttl: Defines the amount of time the cached object is valid.
     public func cache<T: Codable>(object: T, key: Keyable, ttl: TTL = TTL.default) async throws {
-        let wrapper = CacheWrapper(ttl: ttl, created: Self.makeDate(), object: object)
-        try await cache.cache(Self.encoder.encode(wrapper), key: key.rawValue)
+        let wrapper = CacheWrapper(ttl: ttl, created: makeDate(), object: object)
+        try await cache.cache(encoder.encode(wrapper), key: key.rawValue)
     }
 
     /// Deletes the cached object associated with the given key.
@@ -59,7 +58,7 @@ public final class CodableCache {
     public func object<T: Codable>(key: Keyable) async -> T? {
         do {
             let data = try await self.cache.data(key.rawValue)
-            let wrapper = try Self.decoder.decode(CacheWrapper<T>.self, from: data)
+            let wrapper = try decoder.decode(CacheWrapper<T>.self, from: data)
             if wrapper.isObjectStale {
                 try await delete(objectWith: key)
                 return nil

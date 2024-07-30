@@ -8,7 +8,7 @@
 import Foundation
 
 /// Specifies the time-to-live for a cached object.
-public enum TTL: Codable {
+public enum TTL: Codable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case second, minute, hour, day, forever
     }
