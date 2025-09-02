@@ -13,7 +13,7 @@ Swift 5.5x toolchain with Swift Package Manager, iOS 13
 Add `CodableCache` to your `Packages.swift` file:
 
 ```swift
-.package(url: "https://github.com/Mobelux/codable-cache.git", from: "2.0.0"),
+.package(url: "https://github.com/jagreenwood/codable-cache.git", from: "2.0.0"),
 ```
 
 ## ⚙️ Usage
@@ -25,7 +25,7 @@ let diskCache = try DiskCache(storageType: .temporary(nil))
 let codableCache = CodableCache(diskCache)
 ```
 
-Since CodableCache is initialized with [Cache](https://github.com/Mobelux/DiskCache/blob/main/Sources/DiskCache/Cache.swift), any conforming type could be used as the backing cache storage.
+Since CodableCache is initialized with [Cache](https://github.com/jagreenwood/DiskCache/blob/main/Sources/DiskCache/Cache.swift), any conforming type could be used as the backing cache storage.
 
 ### Cache data:
 
